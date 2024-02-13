@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      function objDif(objA, objB) {
+        const result = {};
+        for (let key in objA) {
+          if (!(key in objB)) {
+            result[key] = { __exists_in_a: objA[key] };
+          } else {
+            if (
+              typeof objA[key] === "object" &&
+              typeof objB[key] === "object"
+            ) {
+              if (Array.isArray(objA[key]) && Array.isArray(objB[key])) {
+                const { __items_in_a, __items_in_b, __common_items } =
+                  getArrayDiff(objA[key], objB[key]);
+                result[key] = {
+                  __items_in_a: __items_in_a,
+                  __items_in_b: __items_in_b,
+                  __common_items: __common_items,
+                };
+              } else {
+                result[key] = objDif(objA[key], objB[key]);
+              }
+            } else {
+              if (objA[key] !== objB[key]) {
+                result[key] = {
+                  __value_in_a: objA[key],
+                  __value_in_b: objB[key],
+                };
+              }
+            }
+          }
+        }
+
+        for (let key in objB) {
+          if (!(key in objA)) {
+            result[key] = { __exists_in_b: objB[key] };
+          }
+        }
+
+        return result;
+      }
+
+      function getArrayDiff(arrA, arrB) {
+        const __items_in_a = [];
+        const __items_in_b = [];
+        const __common_items = [];
+
+        for (let itemA of arrA) {
+          let found = false;
+          for (let itemB of arrB) {
+            if (typeof itemA === "object" && typeof itemB === "object") {
+              if (itemA.id === itemB.id) {
+                __common_items.push(objDif(itemA, itemB));
+                found = true;
+                break;
+              }
+            } else {
+              if (itemA === itemB) {
+                __common_items.push(itemA);
+                found = true;
+                break;
+              }
+            }
+          }
+          if (!found) {
+            __items_in_a.push(itemA);
+          }
+        }
+
+        for (let itemB of arrB) {
+          let found = false;
+          for (let itemA of arrA) {
+            if (typeof itemA === "object" && typeof itemB === "object") {
+              if (itemA.id === itemB.id) {
+                found = true;
+                break;
+              }
+            } else {
+              if (itemA === itemB) {
+                found = true;
+                break;
+              }
+            }
+          }
+          if (!found) {
+            __items_in_b.push(itemB);
+          }
+        }
+
+        return { __items_in_a, __items_in_b, __common_items };
+      }
+      objA = {
+        name: "Peter",
+        reads: [
+          {
+            id: 1,
+            name: "Book A",
+            published_at: "2023-01-02T00:00:00.00Z",
+          },
+          {
+            id: 2,
+            name: "Book B",
+            published_at: "2023-01-03T00:00:00.00Z",
+          },
+        ],
+        tags: {
+          smokes: true,
+          bachelor: true,
+          height: 6.4,
+        },
+      };
+
+      objB = {
+        name: "Davidson",
+        reads: [
+          {
+            id: 3,
+            name: "Book A1",
+            published_at: "2023-01-02T00:00:00.00Z",
+          },
+          {
+            id: 2,
+            name: "Book B",
+            published_at: "2023-01-04T00:00:00.00Z",
+          },
+        ],
+        tags: {
+          smokes: false,
+          bachelor: true,
+          weight: 70,
+        },
+      };
+
+      console.log(objDif(objA, objB));
+    </script>
+  </body>
+</html>
